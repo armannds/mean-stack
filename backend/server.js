@@ -1,4 +1,4 @@
-const app = require('./backend/app')
+const app = require('./app')
 const debug = require('debug')('node-angular')
 const http = require('http')
 
@@ -18,13 +18,14 @@ const onError = error => {
   if (error.syscall !== 'listen') {
     throw error
   }
+  const addr = server.address()
   const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + port
   switch (error.code) {
     case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
+      console.error(bind + ' requires elevated privileges')
       process.exit(1)
     case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
+      console.error(bind + ' is already in use')
       process.exit(1)
     default:
       throw error
@@ -33,7 +34,7 @@ const onError = error => {
 
 const onListening = () => {
   const addr = server.address()
-  const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + port;
+  const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + port
   debug('Listening on ' + bind)
 }
 
