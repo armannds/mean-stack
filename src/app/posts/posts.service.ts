@@ -46,10 +46,9 @@ export class PostsService {
       content: content,
     };
     this.http
-      .post<{ message: string, newId: string }>(this.BASE_URL, post)
+      .post<{ message: string, postId: string }>(this.BASE_URL, post)
       .subscribe(responseData => {
-        console.log(responseData.message);
-        post.id = responseData.newId;
+        post.id = responseData.postId;
         this.posts.push(post);
         this.postsUpdated.next(this.copyOfPosts());
       });
