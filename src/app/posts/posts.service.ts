@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Post } from './post.model';
 
 @Injectable({
@@ -9,22 +10,33 @@ import { Post } from './post.model';
 export class PostsService {
   private posts: Post[] = [];
   private postsUpdated = new Subject<Post[]>();
+  private BASE_URL = 'http://localhost:3000/api/posts';
 
   constructor(private http: HttpClient) {}
 
-  getPosts() {
-    this.http
-      .get<{ message: string; posts: Post[] }>(
-        'http://localhost:3000/api/posts'
-      )
-      .subscribe(postData => {
-        this.posts = postData.posts;
-        this.postsUpdated.next(this.copyOfPosts());
-      });
-  }
 
   getPostUpdateListener() {
     return this.postsUpdated.asObservable();
+  }
+
+  getPosts() {
+    this.http
+      .get<{ message: string; posts: any }>(this.BASE_URL)
+      .pipe(
+        map(postData => {
+          return postData.posts.map(post => {
+            return {
+              id: post._id,
+              title: post.title,
+              content: post.content,
+            };
+          });
+        })
+      )
+      .subscribe(posts => {
+        this.posts = posts;
+        this.postsUpdated.next(this.copyOfPosts());
+      });
   }
 
   addPost(title: string, content: string) {
@@ -33,12 +45,22 @@ export class PostsService {
       title: title,
       content: content,
     };
-    this.http.post<{message: string}>('http://localhost:3000/api/posts', post)
-      .subscribe(((responseData) => {
+    this.http
+      .post<{ message: string, newId: string }>(this.BASE_URL, post)
+      .subscribe(responseData => {
         console.log(responseData.message);
+        post.id = responseData.newId;
         this.posts.push(post);
         this.postsUpdated.next(this.copyOfPosts());
-      }));
+      });
+  }
+
+  deletePost(id: string) {
+    this.http.delete(this.BASE_URL + '/' + id)
+    .subscribe(() => {
+      this.posts = this.posts.filter(post => post.id !== id);
+      this.postsUpdated.next(this.copyOfPosts());
+    });
   }
 
   private copyOfPosts() {

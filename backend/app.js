@@ -6,7 +6,7 @@ const Post = require('./models/post')
 
 const app = express()
 
-mongoose.connect('mongodb://localhost:27017/mean-stack', { useNewUrlParser: true })
+mongoose.connect('mongodb://localhost:27017/mean-stack', {useNewUrlParser: true})
   .then(() => {
     console.log('Connected to db!')
   })
@@ -28,9 +28,11 @@ app.post('/api/posts', (req, res, next) => {
     title: req.body.title,
     content: req.body.content
   })
-  post.save()
-  res.status(201).json({
-    message: 'Post added successfully'
+  post.save().then(doc => {
+    res.status(201).json({
+      message: 'Post added successfully',
+      newId: doc._id
+    })
   })
 })
 
@@ -42,9 +44,16 @@ app.get('/api/posts', (req, res, next) => {
         posts: docs
       })
     })
-    .catch(() => {
-      console.log('What the damn hell!')
+})
+
+app.delete('/api/posts/:id', (req, res, next) => {
+  Post.deleteOne({
+    _id: req.params.id
+  }).then(() => {
+    res.status(200).json({
+      message: 'Post deleted'
     })
+  })
 })
 
 module.exports = app
