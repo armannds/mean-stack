@@ -19,12 +19,24 @@ export class PostsService {
     return this.postsUpdated.asObservable();
   }
 
+  getPost(id: string) {
+    return this.http.get<{message: string; post: any}>(this.BASE_URL + '/' + id)
+    .pipe(
+      map(response => {
+      return {
+          id: response.post._id,
+          title: response.post.title,
+          content: response.post.content,
+        };
+    }));
+  }
+
   getPosts() {
     this.http
       .get<{ message: string; posts: any }>(this.BASE_URL)
       .pipe(
-        map(postData => {
-          return postData.posts.map(post => {
+        map(response => {
+          return response.posts.map(post => {
             return {
               id: post._id,
               title: post.title,
@@ -47,11 +59,23 @@ export class PostsService {
     };
     this.http
       .post<{ message: string, postId: string }>(this.BASE_URL, post)
-      .subscribe(responseData => {
-        post.id = responseData.postId;
+      .subscribe(response => {
+        post.id = response.postId;
         this.posts.push(post);
         this.postsUpdated.next(this.copyOfPosts());
       });
+  }
+
+  updatePost(id: string, title: string, content: string) {
+    const post: Post = {id: id, title: title, content: content};
+    this.http.put(this.BASE_URL + '/' + id, post)
+    .subscribe(response => {
+      const updatedPosts = this.copyOfPosts();
+      const updatedPostIndex = updatedPosts.findIndex(p => p.id === post.id);
+      updatedPosts[updatedPostIndex] = post;
+      this.posts = updatedPosts;
+      this.postsUpdated.next(this.copyOfPosts());
+    });
   }
 
   deletePost(id: string) {

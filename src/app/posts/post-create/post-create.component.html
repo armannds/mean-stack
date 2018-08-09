@@ -1,11 +1,11 @@
 <mat-card>
-  <form (submit)="onAddPost(postForm)" #postForm="ngForm">
+  <form (submit)="onSavePost(postForm)" #postForm="ngForm">
     <mat-form-field>
       <input
         matInput
         type="text"
         name="title"
-        ngModel
+        [ngModel]="post?.title"
         required
         placeholder="Title"
         #title="ngModel">
@@ -16,8 +16,8 @@
         matInput
         rows="4"
         name="content"
-        placeholder="Write your post here."
-        ngModel>
+        [ngModel]="post?.content"
+        placeholder="Write your post here.">
       </textarea>
     </mat-form-field>
     <button
