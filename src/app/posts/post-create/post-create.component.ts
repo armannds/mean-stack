@@ -19,6 +19,7 @@ export class PostCreateComponent implements OnInit {
   enteredTitle = '';
   enteredContent = '';
   post: Post;
+  isLoading = false;
   private currentMode = Mode.Create;
   private postId: string;
 
@@ -29,9 +30,11 @@ export class PostCreateComponent implements OnInit {
       if (paramMap.has('id')) {
         this.currentMode = Mode.Edit;
         this.postId = paramMap.get('id');
+        this.isLoading = true;
         this.postsService.getPost(this.postId).subscribe(post => {
+          this.isLoading = false;
           this.post = {
-            id: post._id,
+            id: post.id,
             title: post.title,
             content: post.content
           };
