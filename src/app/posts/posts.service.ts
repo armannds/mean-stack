@@ -15,21 +15,22 @@ export class PostsService {
 
   constructor(private http: HttpClient, private router: Router) {}
 
-
   getPostUpdateListener() {
     return this.postsUpdated.asObservable();
   }
 
   getPost(id: string) {
-    return this.http.get<{message: string; post: any}>(this.BASE_URL + '/' + id)
-    .pipe(
-      map(response => {
-      return {
-          id: response.post._id,
-          title: response.post.title,
-          content: response.post.content,
-        };
-    }));
+    return this.http
+      .get<{ message: string; post: any }>(this.BASE_URL + '/' + id)
+      .pipe(
+        map(response => {
+          return {
+            id: response.post._id,
+            title: response.post.title,
+            content: response.post.content,
+          };
+        })
+      );
   }
 
   getPosts() {
@@ -42,6 +43,7 @@ export class PostsService {
               id: post._id,
               title: post.title,
               content: post.content,
+              imagePath: post.imagePath,
             };
           });
         })
@@ -52,16 +54,22 @@ export class PostsService {
       });
   }
 
-  addPost(title: string, content: string) {
-    const post: Post = {
-      id: null,
-      title: title,
-      content: content,
-    };
+  addPost(title: string, content: string, image: File) {
+    const postData = new FormData();
+    postData.append('title', title);
+    postData.append('content', content);
+    postData.append('image', image, title);
+
     this.http
-      .post<{ message: string, postId: string }>(this.BASE_URL, post)
+      .post<{ message: string; post: Post }>(this.BASE_URL, postData)
       .subscribe(response => {
-        post.id = response.postId;
+        const post: Post = {
+          id: response.post.id,
+          title: title,
+          content: content,
+          imagePath: response.post.imagePath,
+        };
+        post.id = response.post.id;
         this.posts.push(post);
         this.postsUpdated.next(this.copyOfPosts());
         this.router.navigate(['/']);
@@ -69,9 +77,13 @@ export class PostsService {
   }
 
   updatePost(id: string, title: string, content: string) {
-    const post: Post = {id: id, title: title, content: content};
-    this.http.put(this.BASE_URL + '/' + id, post)
-    .subscribe(response => {
+    const post: Post = {
+      id: id,
+      title: title,
+      content: content,
+      imagePath: null,
+    };
+    this.http.put(this.BASE_URL + '/' + id, post).subscribe(response => {
       const updatedPosts = this.copyOfPosts();
       const updatedPostIndex = updatedPosts.findIndex(p => p.id === post.id);
       updatedPosts[updatedPostIndex] = post;
@@ -82,8 +94,7 @@ export class PostsService {
   }
 
   deletePost(id: string) {
-    this.http.delete(this.BASE_URL + '/' + id)
-    .subscribe(() => {
+    this.http.delete(this.BASE_URL + '/' + id).subscribe(() => {
       this.posts = this.posts.filter(post => post.id !== id);
       this.postsUpdated.next(this.copyOfPosts());
     });
