@@ -28,6 +28,7 @@ export class PostsService {
             id: response.post._id,
             title: response.post.title,
             content: response.post.content,
+            imagePath: response.post.imagePath,
           };
         })
       );
@@ -76,16 +77,31 @@ export class PostsService {
       });
   }
 
-  updatePost(id: string, title: string, content: string) {
-    const post: Post = {
-      id: id,
-      title: title,
-      content: content,
-      imagePath: null,
-    };
-    this.http.put(this.BASE_URL + '/' + id, post).subscribe(response => {
+  updatePost(id: string, title: string, content: string, image: File | string) {
+    let postData: Post | FormData;
+    if (typeof image === 'object') {
+      postData = new FormData();
+      postData.append('id', id);
+      postData.append('title', title);
+      postData.append('content', content);
+      postData.append('image', image, title);
+    } else {
+      postData = {
+        id: id,
+        title: title,
+        content: content,
+        imagePath: image,
+      };
+    }
+    this.http.put(this.BASE_URL + '/' + id, postData).subscribe(response => {
       const updatedPosts = this.copyOfPosts();
-      const updatedPostIndex = updatedPosts.findIndex(p => p.id === post.id);
+      const updatedPostIndex = updatedPosts.findIndex(p => p.id === id);
+      const post: Post = {
+        id: id,
+        title: title,
+        content: content,
+        imagePath: '',
+      };
       updatedPosts[updatedPostIndex] = post;
       this.posts = updatedPosts;
       this.postsUpdated.next(this.copyOfPosts());
