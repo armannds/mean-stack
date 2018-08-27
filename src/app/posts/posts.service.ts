@@ -10,7 +10,7 @@ import { Post } from './post.model';
 })
 export class PostsService {
   private posts: Post[] = [];
-  private postsUpdated = new Subject<Post[]>();
+  private postsUpdated = new Subject<{ posts: Post[]; postCount: number }>();
   private BASE_URL = 'http://localhost:3000/api/posts';
 
   constructor(private http: HttpClient, private router: Router) {}
@@ -34,24 +34,33 @@ export class PostsService {
       );
   }
 
-  getPosts() {
+  getPosts(postsPerPage: number, currentPage: number) {
+    const queryParams = `?pageSize=${postsPerPage}&page=${currentPage}`;
     this.http
-      .get<{ message: string; posts: any }>(this.BASE_URL)
+      .get<{ message: string; posts: any; maxPosts: number }>(
+        this.BASE_URL + queryParams
+      )
       .pipe(
         map(response => {
-          return response.posts.map(post => {
-            return {
-              id: post._id,
-              title: post.title,
-              content: post.content,
-              imagePath: post.imagePath,
-            };
-          });
+          return {
+            posts: response.posts.map(post => {
+              return {
+                id: post._id,
+                title: post.title,
+                content: post.content,
+                imagePath: post.imagePath,
+              };
+            }),
+            maxPosts: response.maxPosts,
+          };
         })
       )
-      .subscribe(posts => {
-        this.posts = posts;
-        this.postsUpdated.next(this.copyOfPosts());
+      .subscribe(postData => {
+        this.posts = postData.posts;
+        this.postsUpdated.next({
+          posts: this.copyOfPosts(),
+          postCount: postData.maxPosts,
+        });
       });
   }
 
@@ -64,15 +73,6 @@ export class PostsService {
     this.http
       .post<{ message: string; post: Post }>(this.BASE_URL, postData)
       .subscribe(response => {
-        const post: Post = {
-          id: response.post.id,
-          title: title,
-          content: content,
-          imagePath: response.post.imagePath,
-        };
-        post.id = response.post.id;
-        this.posts.push(post);
-        this.postsUpdated.next(this.copyOfPosts());
         this.router.navigate(['/']);
       });
   }
@@ -94,26 +94,12 @@ export class PostsService {
       };
     }
     this.http.put(this.BASE_URL + '/' + id, postData).subscribe(response => {
-      const updatedPosts = this.copyOfPosts();
-      const updatedPostIndex = updatedPosts.findIndex(p => p.id === id);
-      const post: Post = {
-        id: id,
-        title: title,
-        content: content,
-        imagePath: '',
-      };
-      updatedPosts[updatedPostIndex] = post;
-      this.posts = updatedPosts;
-      this.postsUpdated.next(this.copyOfPosts());
       this.router.navigate(['/']);
     });
   }
 
   deletePost(id: string) {
-    this.http.delete(this.BASE_URL + '/' + id).subscribe(() => {
-      this.posts = this.posts.filter(post => post.id !== id);
-      this.postsUpdated.next(this.copyOfPosts());
-    });
+    return this.http.delete(this.BASE_URL + '/' + id);
   }
 
   private copyOfPosts() {
