@@ -1,6 +1,7 @@
 const express = require('express')
 const multer = require('multer')
 const Post = require('../models/post')
+const checkAuth = require('../middleware/check-auth')
 
 const router = express.Router()
 
@@ -26,42 +27,48 @@ const storage = multer.diskStorage({
   }
 })
 
-router.post('', multer({storage: storage}).single('image'), (req, res, next) => {
-  const url = req.protocol + '://' + req.get('host')
-  const post = new Post({
-    title: req.body.title,
-    content: req.body.content,
-    imagePath: req.file ? url + '/images/' + req.file.filename : ""
-  })
-  post.save().then(result => {
-    res.status(201).json({
-      message: 'Post added successfully',
-      post: {
-        ...result,
-        id: result._id
-      }
-    })
-  })
-})
-
-router.put('/:id', multer({storage: storage}).single('image'), (req, res, next) => {
-  let imagePath = req.body.imagePath
-  if (req.file) {
+router.post(
+  '',
+  checkAuth,
+  multer({ storage: storage }).single('image'), (req, res, next) => {
     const url = req.protocol + '://' + req.get('host')
-    imagePath = url + '/images/' + req.file.filename
-  }
-
-  const post = new Post({
-    _id: req.body.id,
-    title: req.body.title,
-    content: req.body.content,
-    imagePath: imagePath
-  })
-  Post.updateOne({_id: req.params.id}, post)
-    .then((result) => {
-      res.status(200).json({message: 'Update successfull'})
+    const post = new Post({
+      title: req.body.title,
+      content: req.body.content,
+      imagePath: req.file ? url + '/images/' + req.file.filename : ''
     })
-})
+    post.save().then(result => {
+      res.status(201).json({
+        message: 'Post added successfully',
+        post: {
+          ...result,
+          id: result._id
+        }
+      })
+    })
+  })
+
+router.put(
+  '/:id',
+  checkAuth,
+  multer({ storage: storage }).single('image'), (req, res, next) => {
+    let imagePath = req.body.imagePath
+    if (req.file) {
+      const url = req.protocol + '://' + req.get('host')
+      imagePath = url + '/images/' + req.file.filename
+    }
+
+    const post = new Post({
+      _id: req.body.id,
+      title: req.body.title,
+      content: req.body.content,
+      imagePath: imagePath
+    })
+    Post.updateOne({ _id: req.params.id }, post)
+      .then((result) => {
+        res.status(200).json({ message: 'Update successfull' })
+      })
+  })
 
 router.get('', (req, res, next) => {
   const pageSize = +req.query.pageSize
@@ -88,17 +95,17 @@ router.get('', (req, res, next) => {
 })
 
 router.get('/:id', (req, res, next) => {
-  Post.findById({_id: req.params.id})
+  Post.findById({ _id: req.params.id })
     .then(post => {
       if (post) {
-        res.status(200).json({message: 'Post found', post: post})
+        res.status(200).json({ message: 'Post found', post: post })
       } else {
-        res.status(404).json({message: 'Post not found!'})
+        res.status(404).json({ message: 'Post not found!' })
       }
     })
 })
 
-router.delete('/:id', (req, res, next) => {
+router.delete('/:id', checkAuth, (req, res, next) => {
   Post.deleteOne({
     _id: req.params.id
   }).then(() => {
