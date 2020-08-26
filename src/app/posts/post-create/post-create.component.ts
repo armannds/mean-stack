@@ -80,6 +80,7 @@ export class PostCreateComponent implements OnInit {
   }
 
   onSavePost() {
+    this.isLoading = true;
     if (this.currentMode === Mode.Create) {
       this.postsService.addPost(
         this.form.value.title,

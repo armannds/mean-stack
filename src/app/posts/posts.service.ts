@@ -13,7 +13,7 @@ export class PostsService {
   private postsUpdated = new Subject<{ posts: Post[]; postCount: number }>();
   private BASE_URL = 'http://localhost:3000/api/posts';
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) { }
 
   getPostUpdateListener() {
     return this.postsUpdated.asObservable();
@@ -72,9 +72,7 @@ export class PostsService {
 
     this.http
       .post<{ message: string; post: Post }>(this.BASE_URL, postData)
-      .subscribe(response => {
-        this.router.navigate(['/']);
-      });
+      .subscribe(response => this.router.navigate(['/']));
   }
 
   updatePost(id: string, title: string, content: string, image: File | string) {
@@ -93,9 +91,9 @@ export class PostsService {
         imagePath: image,
       };
     }
-    this.http.put(this.BASE_URL + '/' + id, postData).subscribe(response => {
-      this.router.navigate(['/']);
-    });
+    this.http
+      .put(this.BASE_URL + '/' + id, postData)
+      .subscribe(response => this.router.navigate(['/']));
   }
 
   deletePost(id: string) {
