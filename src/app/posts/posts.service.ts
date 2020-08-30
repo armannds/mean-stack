@@ -13,7 +13,7 @@ export class PostsService {
   private postsUpdated = new Subject<{ posts: Post[]; postCount: number }>();
   private BASE_URL = 'http://localhost:3000/api/posts';
 
-  constructor(private http: HttpClient, private router: Router) { }
+  constructor(private http: HttpClient, private router: Router) {}
 
   getPostUpdateListener() {
     return this.postsUpdated.asObservable();
@@ -23,7 +23,7 @@ export class PostsService {
     return this.http
       .get<{ message: string; post: any }>(this.BASE_URL + '/' + id)
       .pipe(
-        map(response => {
+        map((response) => {
           return {
             id: response.post._id,
             title: response.post.title,
@@ -41,21 +41,22 @@ export class PostsService {
         this.BASE_URL + queryParams
       )
       .pipe(
-        map(response => {
+        map((response) => {
           return {
-            posts: response.posts.map(post => {
+            posts: response.posts.map((post) => {
               return {
                 id: post._id,
                 title: post.title,
                 content: post.content,
                 imagePath: post.imagePath,
+                creator: post.creator,
               };
             }),
             maxPosts: response.maxPosts,
           };
         })
       )
-      .subscribe(postData => {
+      .subscribe((postData) => {
         this.posts = postData.posts;
         this.postsUpdated.next({
           posts: this.copyOfPosts(),
@@ -72,7 +73,7 @@ export class PostsService {
 
     this.http
       .post<{ message: string; post: Post }>(this.BASE_URL, postData)
-      .subscribe(response => this.router.navigate(['/']));
+      .subscribe((response) => this.router.navigate(['/']));
   }
 
   updatePost(id: string, title: string, content: string, image: File | string) {
@@ -93,7 +94,7 @@ export class PostsService {
     }
     this.http
       .put(this.BASE_URL + '/' + id, postData)
-      .subscribe(response => this.router.navigate(['/']));
+      .subscribe((response) => this.router.navigate(['/']));
   }
 
   deletePost(id: string) {
