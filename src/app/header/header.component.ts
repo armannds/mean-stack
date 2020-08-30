@@ -24,4 +24,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.authListenerSubscription.unsubscribe();
   }
+
+  onLogout() {
+    this.authService.logout();
+  }
 }
