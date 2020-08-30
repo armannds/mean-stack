@@ -36,11 +36,14 @@ export class AuthService {
       email: email,
       password: password,
     };
-    this.http
-      .post(`${this.BASE_URL}/signup`, authData)
-      .subscribe((response) => {
-        console.log(response);
-      });
+    this.http.post(`${this.BASE_URL}/signup`, authData).subscribe(
+      () => {
+        this.isAuthenticated = true;
+        this.authStatusListener.next(this.isAuthenticated);
+        this.router.navigate(['/']);
+      },
+      () => this.authStatusListener.next(false)
+    );
   }
 
   login(email: string, password: string) {
@@ -53,23 +56,26 @@ export class AuthService {
         `${this.BASE_URL}/login`,
         authData
       )
-      .subscribe((response) => {
-        this.token = response.token;
-        if (this.token) {
-          this.isAuthenticated = true;
-          this.userId = response.userId;
-          this.authStatusListener.next(this.isAuthenticated);
-          const expiresInSeconds = response.expiresIn * 1000;
-          const expirationDate = new Date().getTime() + expiresInSeconds;
-          this.setAuthenticationTimer(expiresInSeconds);
-          this.saveAuthenticationData(
-            this.token,
-            new Date(expirationDate),
-            this.userId
-          );
-          this.router.navigate(['/']);
-        }
-      });
+      .subscribe(
+        (response) => {
+          this.token = response.token;
+          if (this.token) {
+            this.isAuthenticated = true;
+            this.userId = response.userId;
+            this.authStatusListener.next(this.isAuthenticated);
+            const expiresInSeconds = response.expiresIn * 1000;
+            const expirationDate = new Date().getTime() + expiresInSeconds;
+            this.setAuthenticationTimer(expiresInSeconds);
+            this.saveAuthenticationData(
+              this.token,
+              new Date(expirationDate),
+              this.userId
+            );
+            this.router.navigate(['/']);
+          }
+        },
+        () => this.authStatusListener.next(false)
+      );
   }
 
   autoAuthenticateUser() {
