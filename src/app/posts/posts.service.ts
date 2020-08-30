@@ -29,6 +29,7 @@ export class PostsService {
             title: response.post.title,
             content: response.post.content,
             imagePath: response.post.imagePath,
+            creator: response.post.creator,
           };
         })
       );
@@ -90,6 +91,7 @@ export class PostsService {
         title: title,
         content: content,
         imagePath: image,
+        creator: null,
       };
     }
     this.http
