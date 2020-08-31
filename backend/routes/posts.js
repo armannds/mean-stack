@@ -42,15 +42,24 @@ router.post(
       imagePath: req.file ? url + '/images/' + req.file.filename : '',
       creator: req.userData.userId
     })
-    post.save().then(result => {
-      res.status(201).json({
-        message: 'Post added successfully',
-        post: {
-          ...result,
-          id: result._id
-        }
+    post
+      .save()
+      .then(result => {
+        res.status(201).json({
+          message: 'Post added successfully',
+          post: {
+            ...result,
+            id: result._id
+          }
+        })
       })
-    })
+      .catch(err => {
+        res.status(500).json({
+          title: 'Error creating a post!',
+          message: 'Creating a post failed',
+          error: err
+        })
+      })
   }
 )
 
@@ -72,16 +81,24 @@ router.put(
       imagePath: imagePath,
       creator: req.userData.userId
     })
-    Post.updateOne(
-      { _id: req.params.id, creator: req.userData.userId },
-      post
-    ).then(result => {
-      if (result.nModified > 0) {
-        res.status(200).json({ message: 'Update successfull' })
-      } else {
-        res.status(401).json({ message: 'Not authorized to edit post!' })
-      }
-    })
+    Post.updateOne({ _id: req.params.id, creator: req.userData.userId }, post)
+      .then(result => {
+        if (result.nModified > 0) {
+          res.status(200).json({ message: 'Update successfull' })
+        } else {
+          res.status(401).json({
+            title: 'Authorization error',
+            message: 'Not authorized to edit post!'
+          })
+        }
+      })
+      .catch(err => {
+        res.status(500).json({
+          title: 'Error updating a post',
+          message: 'Something went wrong when updating a post',
+          error: err
+        })
+      })
   }
 )
 
@@ -105,29 +122,52 @@ router.get('', (req, res, next) => {
         maxPosts: count
       })
     })
+    .catch(err => {
+      res.status(500).json({
+        title: 'Error fetching posts',
+        message: 'Something went wrong when fetching posts',
+        error: err
+      })
+    })
 })
 
 router.get('/:id', (req, res, next) => {
-  Post.findById({ _id: req.params.id }).then(post => {
-    if (post) {
-      res.status(200).json({ message: 'Post found', post: post })
-    } else {
-      res.status(404).json({ message: 'Post not found!' })
-    }
-  })
+  Post.findById({ _id: req.params.id })
+    .then(post => {
+      if (post) {
+        res.status(200).json({ message: 'Post found', post: post })
+      } else {
+        res.status(404).json({ message: 'Post not found!' })
+      }
+    })
+    .catch(err => {
+      res.status(500).json({
+        title: 'Error fetching post',
+        message: 'Something went wrong when fetching post',
+        error: err
+      })
+    })
 })
 
 router.delete('/:id', checkAuth, (req, res, next) => {
   Post.deleteOne({
     _id: req.params.id,
     creator: req.userData.userId
-  }).then(result => {
-    if (result.n > 0) {
-      res.status(200).json({ message: 'Deletion successfull' })
-    } else {
-      res.status(401).json({ message: 'Not authorized to delete post!' })
-    }
   })
+    .then(result => {
+      if (result.n > 0) {
+        res.status(200).json({ message: 'Deletion successfull' })
+      } else {
+        res.status(401).json({ message: 'Not authorized to delete post!' })
+      }
+    })
+    .catch(err => {
+      res.status(500).json({
+        title: 'Error deleting post',
+        message: 'Something went wrong when deleting posts',
+        error: err
+      })
+    })
 })
 
 module.exports = router
